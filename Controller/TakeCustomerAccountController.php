@@ -12,6 +12,8 @@
 
 namespace TakeCustomerAccount\Controller;
 
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use TakeCustomerAccount\Event\TakeCustomerAccountEvent;
 use TakeCustomerAccount\Event\TakeCustomerAccountEvents;
@@ -30,10 +32,11 @@ class TakeCustomerAccountController extends BaseAdminController
 {
     /**
      * @param int $customer_id
-     * @return \Symfony\Component\HttpFoundation\Response
-     * @throws \Exception
+     * @param EventDispatcherInterface $eventDispatcher
+     * @param RequestStack $requestStack
+     * @return Response
      */
-    public function takeAction($customer_id, EventDispatcherInterface $eventDispatcher)
+    public function takeAction(int $customer_id, EventDispatcherInterface $eventDispatcher, RequestStack $requestStack): Response
     {
         if (null !== $response = $this->checkAuth(array(), 'TakeCustomerAccount', AccessManager::VIEW)) {
             return $response;
@@ -62,8 +65,11 @@ class TakeCustomerAccountController extends BaseAdminController
                 return $this->generateSuccessRedirect($form);
             }
 
+            $request = $requestStack->getCurrentRequest();
+            $baseUrl = $request?->getSchemeAndHttpHost() . $request?->getBasePath();
+
             $this->setCurrentRouter('router.front');
-            return $this->generateRedirect('/account');
+            return $this->generateRedirect($baseUrl . '/account');
         } catch (RedirectException $e) {
             return $this->generateRedirect($e->getUrl(), $e->getCode());
         } catch (\Exception $e) {
